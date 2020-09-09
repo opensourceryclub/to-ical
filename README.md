@@ -44,3 +44,7 @@ where `cmd` is
 - `serve` - Same as `watch`, but also starts a development server at port `9000`
 
 and `env` is `dev`, `test`, `prod`, or omitted.
+
+## License
+
+Copyright &copy; 2020 Open Sourcery. Licensed under the MIT license.

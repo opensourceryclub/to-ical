@@ -4,7 +4,7 @@
   "description": "Scrapes useful data (e.g. class schedule) from testudo.umd.edu",
   "main": "dist/index.js",
   "author": "Don Isaac",
-  "license": "GPL-3.0",
+  "license": "MIT",
   "private": false,
   "module": "dist/index.js", "scripts": {
     "prebuild": "rimraf dist",
