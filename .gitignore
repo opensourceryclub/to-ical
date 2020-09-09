@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.swp
+*.swo
+*.tmp
+*.log
+tmp/
+log/

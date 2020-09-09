@@ -1,0 +1,43 @@
+{
+  "name": "testudo-helper",
+  "version": "1.0.0",
+  "description": "Scrapes useful data (e.g. class schedule) from testudo.umd.edu",
+  "main": "dist/index.js",
+  "author": "Don Isaac",
+  "license": "GPL-3.0",
+  "private": false,
+  "module": "dist/index.js", "scripts": {
+    "prebuild": "rimraf dist",
+    "": "=============================== BUILD ===============================",
+    "build": "webpack --cache --output-pathinfo --display-modules",
+    "build:dev": "yarn build --debug --env development",
+    "build:test": "yarn build --debug --env test",
+    "build:prod": "yarn build --optimize-minimize --env production",
+    "-": "============================== WATCH ===============================",
+    "watch": "yarn build -w",
+    "watch:dev": "yarn build:dev -w",
+    "watch:test": "yarn build:test -w",
+    "watch:prod": "yarn build:prod -w",
+    "--": "============================= SERVE ===============================",
+    "serve": "webpack-dev-server --cache --output-pathinfo --display-modules --watch",
+    "serve:dev": "yarn serve --debug --env development",
+    "serve:test": "yarn serve --debug --env test",
+    "serve:prod": "yarn serve --env production",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.122",
+    "@types/jest": "^26.0.13",
+    "@types/webpack": "^4.41.22",
+    "@webpack-cli/init": "^0.3.0",
+    "copy-webpack-plugin": "^6.1.0",
+    "jest": "^26.4.2",
+    "rimraf": "^3.0.2",
+    "ts-jest": "^26.3.0",
+    "ts-loader": "^8.0.3",
+    "typescript": "^4.0.2",
+    "webpack": "^4.44.1",
+    "webpack-cli": "^3.3.12",
+    "webpack-dev-server": "^3.11.0"
+  }
+}
