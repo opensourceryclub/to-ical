@@ -1,4 +1,5 @@
-import { Rule, Character, RuleDecorator, Context, Falsey, Thunk,  Reducer2 } from "./types"
+import { Rule, ListRule, Character, RuleDecorator, Context, Falsey, Thunk,  Reducer2 } from "./types"
+import { throws, reduceObj } from "./lib"
 
 /**
  * Temp variable to enable functional programming.
@@ -6,29 +7,25 @@ import { Rule, Character, RuleDecorator, Context, Falsey, Thunk,  Reducer2 } fro
 let tmp: any;
 
 /**
- * Throws an error. Throw statements may only be used imperatively; this function
- * allows for errors to be thrown functionally.
- * @param err
+ * @see {@link https://tools.ietf.org/html/rfc5545#section-3.3 iCal Data Types}
  */
-export const throws: <E extends string | Error = any>(err: E | Thunk<E>) => never =
-    err => {
-        if (typeof err === "function") {
-            err = err()
-        }
-        if (typeof err === "string") {
-            err = new Error(err) as any
-        }
+export enum DataType {
+    BINARY           = "BINARY",             // 3.3.1
+    BOOLEAN          = "BOOLEAN",            // 3.3.2
+    CAL_USER_ADDRESS = "CAL_USER_ADDRESS",   // ...
+    DATE             = "DATE",
+    DATETIME         = "DATETIME",
+    DURATION         = "DURATION",
+    FLOAT            = "FLOAT",
+    INTEGER          = "INTEGER",
+    TIME_PERIOD      = "TIME_PERIOD",
+    RRULE            = "RRULE",
+    TEXT             = "TEXT",
+    TIME             = "TIME",
+    URI              = "URI",
+    UTC_OFFSET       = "UTC_OFFSET"
+}
 
-        throw err;
-    }
-
-// export const reduceObj: <Acc, Iter = Acc>(obj: Iter, reducer: (acc: Acc, key: keyof Iter, val: Iter[keyof Iter]) => Acc, init: Acc) =
-export const reduceObj = <Acc, Iter = Acc>(
-    obj: Iter,
-    // reducer: (acc: Acc, key: keyof Iter, val: Iter[keyof Iter]) => Acc,
-    reducer: Reducer2<Iter, Acc>,
-    init: Acc
-) => (Object.keys(obj) as Array<keyof Iter>).reduce((acc, key) => reducer(acc, key, obj[key]), init)
 
 /**
  * @see {@link https://icalendar.org/iCalendar-RFC-5545/2-1-formatting-conventions.html ICal Formatting Conventions}
@@ -147,22 +144,6 @@ export const num: (n?: number) => Rule<number> =
     )
 
 /**
- * Validates a list of inputs.
- *
- * Each input is checked against a regular expression that represents some
- * criteria. If any input in the list is invalid, the whole input is considered
- * invalid.
- *
- * @param inputs The input list
- * @param regex  The criteria each input must pass
- *
- * @returns `true` if all inputs are valid, `false` otherwise.
- */
-export const checkAll: (inputs: string[], regex: RegExp) => boolean =
-    (arr, r) => arr.reduce(
-        (acc: boolean, el) => acc && r.test(el), true)
-
-/**
  * Helper that creates a list rule function.
  *
  * This function decorates a given `rule` that accepts a parameter of type `T`,
@@ -181,7 +162,7 @@ export const checkAll: (inputs: string[], regex: RegExp) => boolean =
  * @param sep  The separator string to use when joining elements of the processed
  * @param rule The production rule to decorate.
  */
-export const LIST_RULE: <T = Context>(sep?: string) => RuleDecorator<T, T | T[]> =
+export const LIST_RULE: <T = Context>(sep?: string) => (rule: Rule<T>) => ListRule<T> =
     (sep = ",") => rule => maybeArr => maybeArr instanceof Array
         ? maybeArr.map(rule).join(sep)
         : rule(maybeArr)

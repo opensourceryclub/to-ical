@@ -1,5 +1,18 @@
-import { Character, Rule, RuleDecorator, Context, PropertyContext, Predicate, ListRule } from "./types"
-import { CHARS, line, $, LINETERM, LIST_RULE, throws } from "./util"
+/**
+ * @file primitives.ts
+ * @description Contains basic production rules that form the backbone of more complex objects
+ *
+ * @license MIT
+ */
+import { Rule, Context, PropertyContext, Predicate, ListRule } from "./types"
+import { CHARS, $, LIST_RULE } from "./util"
+import { throws } from "./lib"
+
+const DQUOTE           = CHARS["DQUOTE"]
+const X_NAME_REGEX     = /^X-([a-zA-Z]{3,})-([a-zA-Z-]+)$/
+const IANA_TOKEN_REGEX = /^[a-zA-Z-]+$/
+
+let _params: string[] | string;
 
 /**
  * ```
@@ -9,9 +22,10 @@ import { CHARS, line, $, LINETERM, LIST_RULE, throws } from "./util"
  * @param xname
  */
 export const X_NAME: Rule<string> = xname =>
-    /^X-([a-zA-Z]{3,})-([a-zA-Z-]+)$/.test(xname)
+    X_NAME_REGEX.test(xname)
         ? xname
         : throws(`Invalid x-name property "${xname}"`)
+;
 
 /**
  * ```
@@ -21,21 +35,100 @@ export const X_NAME: Rule<string> = xname =>
  * @param tok
  */
 export const IANA_TOKEN: Rule<string> = tok =>
-    /^[a-zA-Z-]+$/.test(tok)
+    IANA_TOKEN_REGEX.test(tok)
         ? tok
         : throws(`Invalid IANA token "${tok}"`)
+;
 
 /**
- * Param rule.
- * ```
- * param = param-name "=" param-value *("," param-value)
- * ```
- * @param ctx
+ * @see {@link https://tools.ietf.org/html/rfc5545#section-3.2 iCal Spec S. 3.2}
  */
-export const rParam: Rule<string[]> =
-    ([name, ...values]) => values.length
-        ? `${name}=${values.join(",")}`
-        : throws(`No values provided for param ${name}`)
+const ICAL_PARAMS: Record<string, Rule<unknown>> = {
+    /**
+     * 3.2.1 Alternate Text Representation - specifies a URI that points to an
+     * alternate representation for a textual property value
+     */
+    "ALTREP": uri => DQUOTE + uri + DQUOTE,
+    /**
+     * 3.2.2 Common Name - specify the common name to be associated with the
+     * calendar user specified by the property.
+     */
+    "CN": x => "todo",
+    /**
+     * 3.2.3 Calendar User Type - identifies the type of calendar user specified
+     * by the property it belongs to.
+     */
+    "CUTYPE": x => "todo",
+    // TODO add docs similarly to above
+    /**
+     * 3.2.4 Delegators
+     */
+    "DELEGATED-FROM": x => "todo",
+    /**
+     * 3.2.5 Delegatees
+     */
+    "DELEGATED-TO": x => "todo",
+    /**
+     * 3.2.6 Directory Entry Reference
+     */
+    "DIR": x => "todo",
+    /**
+     * 3.2.7 Inline Encoding
+     */
+    "ENCODING": x => "todo",
+    /**
+     * 3.2.8 Format Type
+     */
+    "FMTTYPE": x => "todo",
+    /**
+     * 3.2.9 Free/Busy Time Type
+     */
+    "FBTYPE": x => "todo",
+    /**
+     * 3.2.10 Language
+     */
+    "LANGUAGE": x => "todo",
+    /**
+     * 3.2.11 Group or List Member
+     */
+    "MEMBER": x => "todo",
+    /**
+     * 3.2.12 Participation Status
+     */
+    "PARTSTAT": x => "todo",
+    /**
+     * 3.2.13 Recurrence Identifier Range
+     */
+    "RANGE": x => "todo",
+    /**
+     * 3.2.14 Alarm Trigger Relationship
+     */
+    "RELATED": x => "todo",
+    /**
+     * 3.2.15 Relationship Type
+     */
+    "RELTYPE": x => "todo",
+    /**
+     * 3.2.16 Participation Role
+     */
+    "ROLE": x => "todo",
+    /**
+     * 3.2.17 RSVP Expectation
+     */
+    "RSVP": x => "todo",
+    /**
+     * 3.2.18 Sent By
+     */
+    "SENT-BY": x => "todo",
+    /**
+     * 3.2.19 Time Zone Identifier
+     */
+    "TZID": x => "todo",
+    /**
+     * 3.2.20 Value Data Types
+     */
+    "VALUE": x => "todo",
+}
 
 /**
  * Encodes 0 or more property parameters.
@@ -57,70 +150,80 @@ export const rParam: Rule<string[]> =
  *
  * @see {@link https://icalendar.org/iCalendar-RFC-5545/3-2-property-parameters.html 3.2 Property Parameters}
  */
-export const rParams: Rule<string[][]> =
-    params => params?.map(rParam).join(";") ?? ""
-    ;
+const PARAM: Rule<[ name: string, value: unknown ]> =
+    ([ name, value ]) => (
+        name = NAME(name),
+        // Find the correct production rule for `value`, call the rule, and update
+        // the value of `value` with the result
+        value = (
+            ICAL_PARAMS[name] ||
+            X_NAME_REGEX.test(name) && X_NAME ||
+            IANA_TOKEN_REGEX.test(name) && IANA_TOKEN ||
+            throws(`Invalid property parameter name "${name}"`)
+        )(value),
+        `${name}=${value}`
+    )
+;
+
+export const PARAMS: Rule =
+    ctx => (
+        _params = Object.keys(ctx),
+        // Empty context means no parameters; return an empty string
+        !_params.length
+            ? ""
+            : _params
+                .map(name => PARAM([ name, ctx[name] ]))
+                .join(";")
+    )
+;
+
 export const NAME: Rule<string> =
-    name => /[A-Z]+/.test(name)
+    name => typeof name === "string" && /[a-zA-Z]+/.test(name)
         ? name.toUpperCase()
-        : throws(`Bad property name "${name}", property names must be nonempty strings.`)
-    ;
+        : throws(
+            `Bad property name "${name}", property names must be nonempty ` +
+            `strings containing only letters.`
+          )
+;
+
 /**
  * TODO
  */
 export const VALUE: ListRule<any> = LIST_RULE<any>()(
     value => value
 )
+
 /**
  * Encodes an iCalendar content line.
  *
- * ABNF:
+ * From the [spec](https://icalendar.org/iCalendar-RFC-5545/3-1-1-list-and-field-separators.html):
+ *
+ * > The iCalendar object is organized into individual lines of text, called
+ *   *content lines*. Content lines are delimited by a line break, which is a `CRLF`
+ *   sequence (`CR` character followed by `LF` character).
+ *
+ * This rule does not add a terminating `CRLF`, because the `$` helper function does it instead.
+ *
+ * content line ABNF:
  * ```
  * contentline = name *(";" param ) ":" value CRLF
  * ```
  *
- * From the [spec](https://icalendar.org/iCalendar-RFC-5545/3-1-1-list-and-field-separators.html):
- *
- * >   The iCalendar object is organized into individual lines of text, called
- *   *content lines*. Content lines are delimited by a line break, which is a `CRLF`
- *   sequence (`CR` character followed by `LF` character).
- *       Lines of text **SHOULD NOT**  be longer than 75 octets, excluding the
- *   line break. Long content lines **SHOULD** be split into a multiple line
- *   representations using a line "folding" technique. That is, a long line can
- *   be split between any two characters by inserting a `CRLF` immediately
- *   followed by a single linear white-space character (i.e., `SPACE` or `HTAB`).
- *       Any sequence of CRLF followed immediately by a single linear white-space
- *   character is ignored (i.e., removed) when processing the content type.
- *
- * > Some properties and parameters allow a list of values. Values in a list of
- *   values MUST be separated by a COMMA character. There is no significance to
- *   the order of values in a list. For those parameter values (such as those
- *   that specify URI values) that are specified in quoted-strings, the
- *   individual quoted-strings are separated by a COMMA character.
- *   - Some property values are defined in terms of multiple parts. These
- *     structured property values MUST have their value parts separated by a
- *     SEMICOLON character.
- *   - Some properties allow a list of parameters. Each property parameter in a
- *     list of property parameters MUST be separated by a SEMICOLON character.
- *   - Property parameters with values containing a COLON character, a SEMICOLON
- *     character or a COMMA character MUST be placed in quoted text.
- *
- * > For example, in the following properties, a SEMICOLON is used to separate
- *   property parameters from each other and a COMMA character is used to separate
- *   property values in a value list.
- *
  * @param ctx An object containing the properties name, parameters, and value.
+ * @see {@link https://tools.ietf.org/html/rfc5545#section-3.1 Section 3.1}
  */
-export const PROPERTY = (name: string, value: any, params: any[] | string = []) => (
-    name?.length && !!value
-        ? (
-            params = !params.length ? "" : rParam(params as string[]),
-            name = NAME(name),
-            value = VALUE(name),
-            `${name}${params}:${value}`
-        )
-        : throws("Content name or value was not provided")
-)
+export const PROPERTY: (name: string, value: any, params?: Record<string, any>) => string =
+    (name, value, params = {}) => (
+        name?.length && !!value
+            ? (
+                _params = params ? PARAMS(params) : "",
+                name    = NAME(name),
+                value   = VALUE(name),
+                `${name}${_params}:${value}`
+              )
+            : throws("Content name or value was not provided")
+    )
+;
 
 /**
  * Factory function that creates a Component rule.
@@ -134,11 +237,19 @@ export const PROPERTY = (name: string, value: any, params: any[] | string = []) 
  * @param name
  * @param isValid
  */
-export const COMPONENT: <T extends Context>(name: string, validate?: Predicate<T>) => Rule<T> =
-    (name, isValid = () => true) => content => !isValid(content)
-        ? throws(`Invalid content provided for component "${name}"`)
-        : $(
-            PROPERTY("BEGIN", name),
-            ...Object.keys(content).map(key => PROPERTY(key, content[key].value, content[key].params)),
-            PROPERTY("END", name),
-        );
+export const COMPONENT: <T extends Context>(
+    name: string,
+    validate?: Predicate<T>
+) => Rule<T> =
+    // *a comment for visually-aesthetic separation*
+    (name, isValid = () => true) => content =>
+        !isValid(content)
+            ? throws(`Invalid content provided for component "${name}"`)
+            : $(
+                PROPERTY("BEGIN", name),
+                ...Object.keys(content).map(
+                    key => PROPERTY(key, content[key].value, content[key].params)
+                ),
+                PROPERTY("END", name),
+               )
+;

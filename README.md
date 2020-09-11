@@ -2,7 +2,7 @@
 
 A TypeScript-native, 0-dependency iCalendar encoder.
 
-to-ical turns your calendar data into an [RFC2445](https://tools.ietf.org/html/rfc5545)-compliant
+to-ical turns your calendar data into an [RFC5545](https://tools.ietf.org/html/rfc5545)-compliant
 format.
 
 ## Usage
