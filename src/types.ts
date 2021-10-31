@@ -13,10 +13,6 @@ type ArityFunction<T, U = void> = T extends [...infer R]
     ? (...arg: R) => U
     : (arg: T) => U
 ;
-type Bar = ArityFunction<[ p: boolean, q: boolean ]>
-type Baz = ArityFunction<boolean>
-type Bang = Arity1Function<boolean>
-// type Bang = ArityFunction<[]>
 type MyReducer<A, E = A> = ArityFunction<[accumulator: A, currElem: E], A>
 // type Baz = ArityFunction<boolean>
 type IdentityFn<T> = T extends any[] ? ArityFunction<[T], T> : ArityFunction<T, T>
@@ -26,7 +22,7 @@ export type Thunk<T> = Fn<[], T>
 // export type Predicate<T = any> = (x?: T) => boolean;
 export type Predicate<T = any> = Fn<[p: T], boolean>
 export type Reducer<El, PAcc = El, RAcc = PAcc> = (acc: PAcc, el: El) => RAcc
-export type Reducer2<Iter, Acc = Iter> = Fn<[acc: Acc, key: keyof Iter, value: Iter[keyof Iter]], Acc>
+export type Reducer2<Iter, Acc = Iter, K extends keyof Iter = keyof Iter> = Fn<[acc: Acc, key: K, value: Iter[K]], Acc>
 export type Falsey = "" | false | 0 | undefined | null
 
 // =============================== ENCODER TYPES ===============================

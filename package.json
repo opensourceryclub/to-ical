@@ -6,7 +6,8 @@
   "author": "Don Isaac",
   "license": "MIT",
   "private": false,
-  "module": "dist/index.js", "scripts": {
+  "module": "dist/index.js",
+  "scripts": {
     "prebuild": "rimraf dist",
     "": "=============================== BUILD ===============================",
     "build": "webpack --cache --output-pathinfo --display-modules",
@@ -27,15 +28,15 @@
   },
   "devDependencies": {
     "@types/chrome": "^0.0.122",
-    "@types/jest": "^26.0.13",
+    "@types/jest": "^27.0.2",
     "@types/webpack": "^4.41.22",
     "@webpack-cli/init": "^0.3.0",
     "copy-webpack-plugin": "^6.1.0",
-    "jest": "^26.4.2",
+    "jest": "^27.3.1",
     "rimraf": "^3.0.2",
-    "ts-jest": "^26.3.0",
-    "ts-loader": "^8.0.3",
-    "typescript": "^4.0.2",
+    "ts-jest": "^27.0.7",
+    "ts-loader": "^9.2.6",
+    "typescript": "^4.4.4",
     "webpack": "^4.44.1",
     "webpack-cli": "^3.3.12",
     "webpack-dev-server": "^3.11.0"

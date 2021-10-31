@@ -8,9 +8,8 @@ import { Reducer2, Thunk, Fn } from "./types"
 export function throws<E extends string | Error = string>(err: E | Thunk<E>): never {
     if (typeof err === "function") {
         err = err()
-    }
-    if (typeof err === "string") {
-        err = new Error(err) as any
+    } else if (typeof err === "string") {
+        err = new Error(err) as E
     }
 
     throw err;
@@ -20,7 +19,7 @@ export function tryCatch<T>(tryBlock: Thunk<T>, catchBlock: Fn<[string | Error],
     try {
         return tryBlock();
     } catch (err) {
-        return catchBlock(err);
+        return catchBlock(err instanceof Error ? err : new Error(String(err)));
     }
 }
 
@@ -42,11 +41,11 @@ export const checkAll: (inputs: string[], regex: RegExp) => boolean =
 ;
 
 // export const reduceObj: <Acc, Iter = Acc>(obj: Iter, reducer: (acc: Acc, key: keyof Iter, val: Iter[keyof Iter]) => Acc, init: Acc) =
-export const reduceObj = <Acc, Iter = Acc>(
+export const reduceObj = <Acc, Iter = Acc, K extends keyof Iter = keyof Iter>(
     obj: Iter,
     reducer: Reducer2<Iter, Acc>,
     init: Acc
-) => (Object.keys(obj) as (keyof Iter)[])
+) => (Object.keys(obj) as (K)[])
     .reduce(
         (acc, key) => reducer(acc, key, obj[key]),
         init

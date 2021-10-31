@@ -1,8 +1,10 @@
-import { Reducer2 } from "../src"
-import { throws, reduceObj, $, LINETERM } from "../src/util"
+
+import { throws, reduceObj, C } from "./lib"
+import { Reducer2 } from "./types"
 
 const clone: <R = any, T extends Array<any> = any[]>(...objects: T) => R =
     (...args) => Object.assign({}, ...args)
+
 /**
  * "throws()" spec
  */
@@ -73,31 +75,64 @@ describe("reduceObj()", () => {
 
     beforeEach(reset)
 
+    type R = Record<string, any>
     it.each((
         reset(), [
             [iter, identityReducer,   emptyStartingAcc,     emptyStartingAcc],
             [iter, accBuilderReducer, emptyStartingAcc,     iter],
             [iter, accBuilderReducer, populatedStartingAcc, clone(iter, populatedStartingAcc)],
-        ] as Array<[iterable: any, reducer: Reducer2<Record<string, any>>, initAcc: any, expected: any]>
+        ] as Array<[iterable: any, reducer: Reducer2<R, R, string>, initAcc: any, expected: any]>
     ))("Reduces over an object", (obj, reducer, init, expected) => {
         let actual: any;
 
-        actual = reduceObj(obj, reducer, init)
+        actual = reduceObj<R, R, string>(obj, reducer, init)
         expect(actual).toEqual(expected)
         expect(reducer).toHaveBeenCalledTimes(numKeys)
     })
 }) // !reduceObj
 
-describe("$()", () => {
-    it("builds an iCalendar block from one or more lines", () => {
-        expect($("foo")).toBe("foo" + LINETERM)
-        expect($("foo", "bar")).toBe("foo" + LINETERM + "bar" + LINETERM)
+describe('C(init, ...fns)', () => {
+    /** Identity function */
+    const ident = jest.fn(x => x)
+    /** Doubles a number */
+    const double = jest.fn<number, [number]>(x => x * 2)
+
+    afterEach(() => {
+        ident.mockClear()
+        double.mockClear()
     })
-    it("ignores falsey inputs", () => {
-        expect($("foo", 0, false, null, undefined, "bar", null)).toBe("foo" + LINETERM + "bar" + LINETERM)
-        expect($("")).toBe("")
-        expect($()).toBe("")
-        expect($("", null, false, undefined)).toBe("")
-        expect($(null, undefined, 0, false, "foo", null, 0, false, undefined)).toBe("foo" + LINETERM)
+
+    describe('When no functions are provided', () => {
+        it('Returns the initial value', () => {
+            const c = C(1)
+            expect(c).toBe(1)
+        })
     })
+
+    describe('When called with multiple functions', () => {
+        let actual: any
+
+        beforeEach(() => {
+            actual = C(
+                1,
+                double,
+                ident
+            )
+        })
+
+        it('returns the number 2', () => {
+            expect(actual).toBe(2)
+        })
+
+        it('Passes the initial value to the leftmost function', () => {
+            expect(double).toBeCalledWith(1)
+            expect(double).toHaveBeenCalledTimes(1)
+        })
+
+        it('Passes the returned values down the chain from left to right', () => {
+            expect(ident).toBeCalledWith(2)
+            expect(ident).toHaveBeenCalledTimes(1)
+        })
+    })
+
 })
