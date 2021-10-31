@@ -73,7 +73,7 @@ export interface RootContext extends Context {
     method?: string
     xComps?: NonNormativeContext[]
     ianaComps?: NonNormativeContext[]
-    events?: Context[]
+    events?: EventContext[]
 }
 
 /**

@@ -12,7 +12,7 @@ module.exports = {
   // bail: 0,
 
   // The directory where Jest should store its cached dependency information
-  // cacheDirectory: "/tmp/jest_rs",
+  cacheDirectory: ".cache/jest",
 
   // Automatically clear mock calls and instances between every test
   clearMocks: true,
@@ -63,7 +63,7 @@ module.exports = {
   // A set of global variables that need to be available in all test environments
   globals: {
     "ts-jest": {
-      "tsConfig": "<rootDir>/tsconfig.json"
+      "tsconfig": "<rootDir>/tsconfig.json"
     }
   },
 

@@ -1,5 +1,6 @@
 import { Rule, ListRule, Context, RootContext, NonNormativeContext, EventContext } from "./types"
-import { $, LIST_RULE, throws } from "./util"
+import { $, LIST_RULE } from "./util"
+import { throws } from "./lib"
 import { PROPERTY, X_NAME, COMPONENT, IANA_TOKEN } from "./primitives";
 
 /**
